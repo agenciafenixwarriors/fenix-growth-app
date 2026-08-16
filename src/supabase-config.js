@@ -1,1 +1,1 @@
-window.FENIX_SUPABASE={url:'https://knzuhcccujtwzlhbsbss.supabase.co',publishableKey:'sb_publishable_zXs9CoVPbqA_DbrEsHKMvg_RwHUByQC'};
+window.FENIX_SUPABASE={url:'https://knzuhcccujtwzlhbsbss.supabase.co',publishableKey:'sb_publishable_zXs9CoVPbqA_DbrEsHKMvg_RwHU8yQC'};
