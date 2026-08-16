@@ -1,1 +1,64 @@
-const ENDPOINT='';const qs=new URLSearchParams(location.search);['utm_source','utm_medium','utm_campaign','utm_content'].forEach(k=>{const el=document.querySelector(`[name="${k}"]`);if(el)el.value=qs.get(k)||''});document.getElementById('leadForm').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,data=Object.fromEntries(new FormData(form).entries()),msg=document.getElementById('msg');if(data.adulto!=='Sim'||data.consentimento!=='Sim'){msg.className='error';msg.textContent='Seus dados foram recebidos, mas não serão encaminhados para contato de ADM.';return}data.created_at=new Date().toISOString();data.page=location.href;try{if(ENDPOINT){const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!res.ok)throw new Error('Falha no envio');}else{const leads=JSON.parse(localStorage.getItem('fenixPublicLeads')||'[]');leads.push(data);localStorage.setItem('fenixPublicLeads',JSON.stringify(leads));}msg.className='success';msg.textContent=ENDPOINT?'Interesse enviado com sucesso.':'Modo de teste: interesse salvo neste navegador. Conecte um endpoint em src/public-form.js para captação pública real.';form.reset();}catch(err){msg.className='error';msg.textContent='Não foi possível enviar agora. Tente novamente.'}});
+const SUPABASE_URL='https://knzuhcccujtwzlhbsbss.supabase.co';
+const SUPABASE_KEY='sb_publishable_zXs9CoVPbqA_DbrEsHKMvg_RwHUByQC';
+const qs=new URLSearchParams(location.search);
+['utm_source','utm_medium','utm_campaign','utm_content'].forEach(k=>{
+  const el=document.querySelector(`[name="${k}"]`);
+  if(el) el.value=qs.get(k)||'';
+});
+
+document.getElementById('leadForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const form=e.currentTarget;
+  const raw=Object.fromEntries(new FormData(form).entries());
+  const msg=document.getElementById('msg');
+
+  if(raw.adulto!=='Sim'||raw.consentimento!=='Sim'){
+    msg.className='error';
+    msg.textContent='Não podemos encaminhar seu cadastro para contato sem confirmação de 18+ e autorização de contato.';
+    return;
+  }
+
+  const payload={
+    nome:raw.nome.trim(),
+    contato:raw.contato.trim(),
+    bigo_id:(raw.bigo||'').trim()||null,
+    adulto_confirmado:true,
+    origem:raw.utm_source||'direto',
+    utm_source:raw.utm_source||null,
+    utm_medium:raw.utm_medium||null,
+    utm_campaign:raw.utm_campaign||'form_publico',
+    utm_content:raw.utm_content||null,
+    objetivo:raw.objetivo||null,
+    consentiu_contato:true,
+    estagio:'Novo',
+    observacoes:`Experiência: ${raw.experiencia||'-'} | Frequência: ${raw.frequencia||'-'} | Eventos/PK/treinamentos: ${raw.eventos||'-'}`
+  };
+
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/leads`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_KEY,
+        'Authorization':`Bearer ${SUPABASE_KEY}`,
+        'Prefer':'return=minimal'
+      },
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const body=await res.text();
+      console.error('Supabase insert failed',res.status,body);
+      throw new Error('Falha no envio');
+    }
+    msg.className='success';
+    msg.textContent='Interesse enviado com sucesso. Nossa equipe poderá entrar em contato pelos dados autorizados.';
+    form.reset();
+    ['utm_source','utm_medium','utm_campaign','utm_content'].forEach(k=>{
+      const el=document.querySelector(`[name="${k}"]`);
+      if(el) el.value=qs.get(k)||'';
+    });
+  }catch(err){
+    msg.className='error';
+    msg.textContent='Não foi possível enviar agora. Tente novamente.';
+  }
+});
