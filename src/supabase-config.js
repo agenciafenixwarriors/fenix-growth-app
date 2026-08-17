@@ -1,0 +1,1 @@
+window.FENIX_SUPABASE={url:'https://knzuhcccujtwzlhbsbss.supabase.co',publishableKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuenVoY2NjdWp0d3psaGJzYnNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDQ3MzQsImV4cCI6MjEwMjQ4MDczNH0.5z5zeiTKkqlcUPtBvGfuDGcy3PAWmZ5RWl-UUlo0Gh0'};
