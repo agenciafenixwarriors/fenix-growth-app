@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Políticas de Pagamento | Fênix Growth CRM</title>
+<link rel="stylesheet" href="src/styles.css">
+<style>
+body{background:#0b0b0d}.payment-wrap{max-width:1200px;margin:auto;padding:24px}
+.pay-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.pay-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.pay-notice{border-left:4px solid #d5af36;padding:12px;background:#252117;border-radius:9px;color:#f5e5ae;margin:14px 0;line-height:1.5}
+.pay-sub{color:#a9a9b2;line-height:1.55}
+.pay-label{display:block;margin-bottom:5px;font-size:13px;color:#e2d5b8}
+.pay-good{color:#84dbaf}.pay-dollar{font-size:25px;font-weight:800;color:#f6d676}
+.pay-compare{background:#17171c;border:1px solid #444046;padding:18px;border-radius:12px}
+.pay-row{display:grid;grid-template-columns:110px 1fr 1fr;gap:10px;align-items:end;margin-bottom:9px}
+.pay-warn{color:#f4c76b}.pay-cell{display:flex;flex-direction:column;gap:4px}
+.pay-status{padding:9px 12px;background:#22262b;border-radius:10px}
+button:disabled{opacity:.5;cursor:default}a{color:#d5af36}
+@media(max-width:760px){.pay-grid,.pay-grid3{grid-template-columns:1fr}.payment-wrap{padding:14px}header{display:block}.pay-row{grid-template-columns:67px 1fr 1fr;gap:6px}}
+</style>
+</head>
+<body>
+<main class="payment-wrap">
+<header><div><h1>🐦‍🔥 Políticas de Pagamento</h1><p>FÊNIX GROWTH CRM · Análise e decisão no recrutamento</p></div>
+<div class="actions"><a href="admin.html"><button class="secondary">Voltar ao CRM</button></a></div></header>
+<div class="pay-notice"><strong>Decisão exclusiva da agência.</strong> O sistema simula os dois regimes, mas a escolha salva é uma decisão de recrutamento, não a confirmação do contrato pela BIGO. A comissão adicional semanal ainda não foi informada oficialmente.</div>
+<section id="signin" class="panel"><p>Conferindo acesso administrativo...</p></section>
+<section id="workspace" style="display:none">
+<div class="panel">
+<h2>1. Candidato e regras vigentes</h2>
+<div class="pay-grid">
+<div><label class="pay-label" for="lead">Candidato do CRM</label><select id="lead"><option value="">Host sem lead / informar BIGO ID</option></select></div>
+<div><label class="pay-label" for="bigo">BIGO ID</label><input id="bigo" placeholder="ID do host" maxlength="100"></div>
+<div><label class="pay-label" for="start">Data prevista do contrato</label><input type="date" id="start" value="2026-10-26"></div>
+<div><label class="pay-label" for="novato">Situação do candidato</label><select id="novato"><option value="yes">Primeira assinatura (novato)</option><option value="no">Contrato anterior / retorno</option></select></div>
+</div>
+<p class="pay-sub">Tabela mensal: BR Host Policy 202610 (vigência 01/10/2026). Tabela semanal: BR Weekly Policy-Host 202610 (vigência 26/10/2026). Para outubro e novembro, a modalidade semanal só pode ser assinada diretamente por novatos do próprio mês. A migração de elegíveis exige solicitação até o dia 20 e pode deixar uma semana sem pagamento.</p>
+</div>
+<div class="panel">
+<h2>2. Projeção por semana</h2>
+<p class="pay-sub">Preencha os Beans e as horas <strong>computadas</strong> em cada semana civil. O mensal soma o período informado; a semanal verifica a meta de 9 horas individualmente. Use somente semanas que correspondam ao período que pretende comparar.</p>
+<div id="weeks"></div>
+<div class="actions"><button id="addWeek" class="secondary">Adicionar 5ª semana</button><button id="removeWeek" class="secondary" style="display:none">Remover 5ª semana</button></div>
+<div class="pay-grid" style="margin-top:16px">
+<div><label class="pay-label" for="foreign">Beans originados dos países com contagem de 50% na mensal (dentro do total acima)</label><input id="foreign" type="number" min="0" step="1" value="0"></div>
+<div><label class="pay-label" for="exchange">Taxa de troca mensal (%)</label><input id="exchange" type="number" min="0" max="100" step="0.01" value="0"></div>
+</div>
+<div class="actions"><button id="simulate">Comparar modalidades</button></div>
+</div>
+<div class="panel">
+<h2>3. Resultado para o host e para a agência</h2>
+<div id="comparison"><p>Carregando tabelas oficiais...</p></div>
+</div>
+<div class="panel">
+<h2>4. Escolha da Agência</h2>
+<div class="pay-grid">
+<div><label class="pay-label" for="choice">Política escolhida para o recrutamento</label>
+<select id="choice"><option value="monthly">Mensal · BR Host Policy 202610</option><option value="weekly">Semanal · BR Weekly Policy-Host 202610</option></select></div>
+<div><label class="pay-label" for="status">Status da escolha</label><select id="status"><option value="simulacao">Simulação / ainda não escolhida</option><option value="selecionada">Selecionada pela agência</option><option value="contrato_assinado">Contrato assinado (confirmado manualmente)</option><option value="revisao_pendente">Revisão pendente</option></select></div>
+<div style="grid-column:1/-1"><label class="pay-label" for="reason">Justificativa e observações</label><input id="reason" maxlength="1200" placeholder="Ex.: host com 9 horas por semana; confirmar elegibilidade e taxa de comissão"></div>
+</div>
+<div class="actions"><button id="saveChoice">Salvar decisão no CRM</button></div><p id="saveResult" class="pay-sub" aria-live="polite"></p>
+<p class="pay-sub">A escolha registrada não muda automaticamente a política no OSS. Após a assinatura, confirme o contrato em <strong>Agency-OSS → Lista dos Hosts</strong> e a data de início. Não são enviados pedidos de troca à BIGO por esta tela.</p>
+</div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0"></script>
+<script src="src/supabase-config.js"></script>
+<script>
+(function(){
+'use strict';
+var sb=window.supabase.createClient(window.FENIX_SUPABASE.url,window.FENIX_SUPABASE.publishableKey);
+var $=function(id){return document.getElementById(id)};
+var policies=[],tiers=[],leads=[],existing=[],currentUser=null,weekCount=4;
+var fmt=function(n){return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(n||0)};
+var money=function(n){return 'US$ '+new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+function p(code){return policies.find(function(x){return x.code===code})}
+function level(code,beans){var found=null;tiers.filter(function(x){return x.policy_id===p(code).id}).sort(function(a,b){return a.beans_min-b.beans_min}).forEach(function(x){if(beans>=x.beans_min)found=x});return found}
+function weekMarkup(i){return '<div class="pay-row"><strong>Semana '+(i+1)+'</strong><div class="pay-cell"><label class="pay-label">Beans recebidos</label><input class="w-beans" type="number" min="0" step="1" value="8000"></div><div class="pay-cell"><label class="pay-label">Horas válidas</label><input class="w-hours" type="number" min="0" max="21" step=".5" value="11"></div></div>'}
+function drawWeeks(){var oldB=Array.from(document.querySelectorAll('.w-beans')).map(function(x){return x.value}),oldH=Array.from(document.querySelectorAll('.w-hours')).map(function(x){return x.value});$('weeks').innerHTML=Array.from({length:weekCount},function(_,i){return weekMarkup(i)}).join('');document.querySelectorAll('.w-beans').forEach(function(x,i){if(oldB[i]!=null)x.value=oldB[i]});document.querySelectorAll('.w-hours').forEach(function(x,i){if(oldH[i]!=null)x.value=oldH[i]});$('addWeek').style.display=weekCount>=5?'none':'';$('removeWeek').style.display=weekCount===5?'':'none'}
+function calculations(){
+var beans=Array.from(document.querySelectorAll('.w-beans')).map(function(x){return Math.max(0,Number(x.value)||0)});
+var hours=Array.from(document.querySelectorAll('.w-hours')).map(function(x){return Math.max(0,Number(x.value)||0)});
+var total=beans.reduce(function(a,b){return a+b},0),totalHours=hours.reduce(function(a,b){return a+b},0);
+var foreign=Math.max(0,Number($('foreign').value)||0),exchange=Number($('exchange').value)||0;
+if(foreign>total){$('comparison').textContent='Os Beans de origem exterior não podem ultrapassar o total informado.';return null}
+if(exchange<0||exchange>100){$('comparison').textContent='A taxa de troca deve ficar entre 0% e 100%.';return null}
+var adjusted=Math.max(0,total-foreign/2),mLevel=level('monthly',adjusted),mMultiplier=0;
+var novice=$('novato').value==='yes';
+if(exchange>=50)mMultiplier=0;
+else if(novice){mMultiplier=totalHours>=10?1:totalHours>=5?.5:0}
+else {mMultiplier=totalHours>=44?1:totalHours>=20?.5:0}
+var mHost=(mLevel?Number(mLevel.host_bonus_usd):0)*mMultiplier;
+var mAgent=(mLevel?Number(mLevel.agent_bonus_usd):0)*mMultiplier;
+var weekly=beans.map(function(b,i){var t=level('weekly',b),mult=hours[i]>=9?1:hours[i]>0?.5:0;return {tier:t,hours:hours[i],beans:b,mult:mult,host:(t?Number(t.host_bonus_usd):0)*mult,agent:(t?Number(t.agent_bonus_usd):0)*mult}});
+var wHost=weekly.reduce(function(a,x){return a+x.host},0),wAgent=weekly.reduce(function(a,x){return a+x.agent},0);
+var monthlyRate=mLevel?mLevel.agent_commission_percent:null;
+var notes=[];
+if(!novice && totalHours===20)notes.push('A política mensal não esclarece expressamente o tratamento de exatamente 20 horas; confirme com o ADM da BIGO.');
+if(weekly.some(function(x){return x.hours>0&&x.hours<9}))notes.push('Semanal: foi aplicada metade do bônus nas semanas com menos de 9h, conforme o documento. Não foi informado um piso mínimo de horas para essa regra.');
+if(exchange>=50)notes.push('Mensal: a taxa de troca de 50% ou mais cancela o pagamento do host e do agente.');
+if(total>=250000)notes.push('Semanal: ao atingir 250 mil Beans recebidos no mês, ocorre transferência obrigatória para o regime mensal no mês seguinte.');
+notes.push('Projeção sem conversão da comissão de Beans em USD: não foi fornecida fórmula oficial. A comissão adicional semanal também não foi especificada.');
+return {total:total,totalHours:totalHours,adjusted:adjusted,monthlyLevel:mLevel,mHost:mHost,mAgent:mAgent,monthlyRate:monthlyRate,wHost:wHost,wAgent:wAgent,weekly:weekly,notes:notes}
+}
+function compute(){
+if(!p('monthly')||!p('weekly'))return;
+var a=calculations();if(!a)return;
+var compareHost=a.mHost>a.wHost?'Mensal':a.wHost>a.mHost?'Semanal':'Empate';
+var compareAgent=a.mAgent>a.wAgent?'Mensal':a.wAgent>a.mAgent?'Semanal':'Empate';
+$('comparison').innerHTML='<div class="pay-grid">'+
+'<div class="pay-compare"><h3>Mensal</h3><p class="pay-sub">Beans válidos: '+fmt(a.adjusted)+' | Horas: '+fmt(a.totalHours)+' | Nível: '+esc(a.monthlyLevel?a.monthlyLevel.level:'Sem faixa')+'</p><div class="pay-dollar">'+money(a.mHost)+'</div><p>Host: bônus mensal estimado</p><div class="pay-dollar">'+money(a.mAgent)+'</div><p>Agência: bônus base</p><p class="pay-status">Comissão adicional: <strong>'+((a.monthlyRate!=null)?fmt(a.monthlyRate)+'% conforme tabela':'Não aplicável à faixa')+'</strong>; valor em USD não calculado</p></div>'+
+'<div class="pay-compare"><h3>Semanal</h3><p class="pay-sub">Beans: '+fmt(a.total)+' | '+a.weekly.length+' semanas civis</p><div class="pay-dollar">'+money(a.wHost)+'</div><p>Host: soma dos bônus semanais</p><div class="pay-dollar">'+money(a.wAgent)+'</div><p>Agência: soma dos bônus base</p><p class="pay-status">Comissão adicional: <strong>não informada pela BIGO</strong></p></div></div>'+
+'<div class="pay-grid" style="margin-top:15px"><div class="pay-status"><strong>Maior bônus conhecido do host: '+compareHost+'</strong><p class="pay-sub">A decisão também depende da elegibilidade, calendário, horas e regras de risco.</p></div><div class="pay-status"><strong>Maior bônus base conhecido da agência: '+compareAgent+'</strong><p class="pay-sub">Não é possível afirmar a maior receita total da agência sem a comissão semanal e a conversão da comissão mensal.</p></div></div>'+
+'<p class="pay-sub">Faixas semanais: '+a.weekly.map(function(x,i){return 'S'+(i+1)+' '+esc(x.tier?x.tier.level:'sem faixa')+' ('+money(x.agent)+' agente)'}).join(' · ')+'</p>'+
+a.notes.map(function(n){return '<div class="pay-notice">'+esc(n)+'</div>'}).join('');
+}
+function setLead(){
+var id=Number($('lead').value),l=leads.find(function(x){return x.id===id});
+if(l&&l.bigo_id)$('bigo').value=l.bigo_id;
+var choice=existing.find(function(x){return (id&&Number(x.lead_id)===id)||(l&&l.bigo_id&&x.bigo_id&&x.bigo_id.toLowerCase()===l.bigo_id.toLowerCase())});
+if(choice){var policy=policies.find(function(x){return x.id===choice.policy_id});if(policy)$('choice').value=policy.code;$('status').value=choice.choice_status;$('reason').value=choice.agency_reason||'';if(choice.contract_start_date)$('start').value=choice.contract_start_date;$('saveResult').textContent='Decisão existente carregada.'}
+else {$('status').value='simulacao';$('reason').value='';$('saveResult').textContent=''}
+}
+async function save(){
+var leadId=$('lead').value?Number($('lead').value):null,bigo=$('bigo').value.trim();
+var code=$('choice').value,policy=p(code),start=$('start').value;
+if(!leadId&&!bigo){$('saveResult').textContent='Selecione um candidato ou informe o BIGO ID.';return}
+if(code==='weekly'&&start&&start<'2026-10-26'){$('saveResult').textContent='A política semanal só entra em vigor em 26/10/2026.';return}
+if(code==='weekly'&&start&&start<'2026-12-01'&&$('novato').value!=='yes'){$('saveResult').textContent='Em outubro e novembro, somente novatos do mês podem assinar diretamente a política semanal.';return}
+if(!policy){$('saveResult').textContent='Tabela oficial não carregada.';return}
+$('saveChoice').disabled=true;$('saveResult').textContent='Salvando...';
+var entry=existing.find(function(x){return (leadId&&Number(x.lead_id)===leadId)||(bigo&&x.bigo_id&&x.bigo_id.toLowerCase()===bigo.toLowerCase())});
+var payload={lead_id:leadId,bigo_id:bigo||null,policy_id:policy.id,choice_status:$('status').value,agency_reason:$('reason').value.trim()||null,agency_decided_by:currentUser.id,agency_decided_at:new Date().toISOString(),contract_start_date:start||null,updated_at:new Date().toISOString()};
+var result=entry?await sb.from('fw_host_payment_choices').update(payload).eq('id',entry.id).select('id').single():await sb.from('fw_host_payment_choices').insert(payload).select('id').single();
+$('saveChoice').disabled=false;
+if(result.error){$('saveResult').textContent='Falha ao salvar: '+result.error.message;return}
+var latest=await sb.from('fw_host_payment_choices').select('*').limit(600);if(!latest.error)existing=latest.data||[];
+$('saveResult').textContent='Decisão salva no CRM. ID do registro: '+result.data.id+'. Ainda é necessário conferir o contrato oficial no OSS.';
+}
+async function init(){
+var sessionResponse=await sb.auth.getSession(),session=sessionResponse.data.session;
+if(!session||!['master','admin'].includes(session.user.app_metadata&&session.user.app_metadata.role)){
+$('signin').innerHTML='<h2>Acesso administrativo necessário</h2><p>Faça login no CRM Admin e abra novamente este módulo.</p><p><a href="admin.html">Ir para o login do CRM</a></p>';return}
+if(session.user.app_metadata.must_change_password){$('signin').innerHTML='<p>Conclua primeiro a troca de senha no <a href="admin.html">CRM Admin</a>.</p>';return}
+currentUser=session.user;
+var responses=await Promise.all([sb.from('fw_payment_policy_versions').select('*').order('effective_from'),sb.from('fw_payment_policy_tiers').select('*'),sb.from('leads').select('id,nome,bigo_id').order('created_at',{ascending:false}).limit(500),sb.from('fw_host_payment_choices').select('*').limit(600)]);
+if(responses[0].error||responses[1].error||responses[3].error){$('signin').textContent='Não foi possível carregar as políticas: '+[responses[0].error,responses[1].error,responses[3].error].filter(Boolean).map(function(x){return x.message}).join('; ');return}
+policies=responses[0].data||[];tiers=responses[1].data||[];leads=responses[2].data||[];existing=responses[3].data||[];
+if(!p('monthly')||!p('weekly')){$('signin').textContent='Tabela mensal ou semanal indisponível. Verifique o cadastro das políticas.';return}
+leads.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.nome+(l.bigo_id?' — '+l.bigo_id:'');$('lead').appendChild(o)});
+$('signin').style.display='none';$('workspace').style.display='block';drawWeeks();compute();
+$('simulate').addEventListener('click',compute);$('addWeek').addEventListener('click',function(){weekCount=5;drawWeeks();compute()});$('removeWeek').addEventListener('click',function(){weekCount=4;drawWeeks();compute()});
+$('lead').addEventListener('change',setLead);$('saveChoice').addEventListener('click',save);
+}
+init().catch(function(e){$('signin').textContent='Erro ao carregar módulo: '+e.message});
+})();
+</script>
+</body>
+</html>
