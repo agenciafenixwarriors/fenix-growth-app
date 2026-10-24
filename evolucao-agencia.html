@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evolução da Agência | Fênix Growth CRM</title>
+<link rel="stylesheet" href="src/styles.css">
+<style>
+body{background:#0d0d10;color:#f2eee5}main{max-width:1330px;margin:auto;padding:20px}a{color:#efc66b}
+header{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:19px}
+h1{font-size:29px;margin:0 0 8px}h2{font-size:20px}h3{margin-top:0}
+.muted{color:#aba8aa;line-height:1.5}.box{background:#1c1b20;border:1px solid #3d3738;border-radius:13px;padding:19px;margin:16px 0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:#222025;border:1px solid #524444;border-radius:12px;padding:15px}
+.kpi small{color:#cbbfb4;display:block;margin-bottom:9px}.kpi strong{display:block;font-size:27px;color:#ecc36a}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.note{border-left:3px solid #bd923a;padding:11px 13px;border-radius:8px;background:#29251f;color:#ecdfbd;line-height:1.5}
+.pill{display:inline-block;background:#413625;color:#f4d07f;padding:5px 8px;border-radius:15px;font-size:12px}
+.table-scroller{overflow-x:auto;max-height:520px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:670px}th,td{padding:10px;text-align:left;border-bottom:1px solid #38363a}
+th{position:sticky;top:0;background:#30242a;color:#ffe9ba;z-index:1}
+.money{color:#f3d187;font-weight:800;font-variant-numeric:tabular-nums}
+.bar-row{display:grid;grid-template-columns:82px 1fr 104px;gap:12px;align-items:center;margin:13px 0}
+.bar-track{height:14px;background:#333037;border-radius:10px;overflow:hidden}
+.bar{height:100%;background:linear-gradient(90deg,#a72932,#e3b35b)}
+.text-small{font-size:12px}select{max-width:235px}
+@media(max-width:780px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}main{padding:12px}.kpi strong{font-size:23px}.bar-row{grid-template-columns:75px 1fr 75px}}
+</style>
+</head>
+<body><main>
+<header><div><h1>🐦‍🔥 Evolução da Agência Fênix</h1><p class="muted">FÊNIX GROWTH CRM · Histórico de produção, recrutamento e pagamentos</p></div>
+<div class="actions"><button class="secondary" id="refresh">Atualizar indicadores</button><a href="politicas-pagamento.html"><button class="secondary">Simulador</button></a><a href="admin.html"><button class="secondary">Voltar ao CRM</button></a></div></header>
+<div class="note"><strong>Interpretação correta:</strong> dados de meses diferentes não devem ser somados automaticamente. Setembro e outubro de 2026 possuem capturas parciais da operação. Os meses anteriores representam <strong>coortes dos hosts ainda presentes</strong> nas listas disponíveis, não um censo histórico completo. Simulações não são repasses.</div>
+<section id="signin" class="box"><p>Validando acesso administrativo...</p></section>
+<div id="workspace" style="display:none">
+<section class="box"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><div><h2>Panorama de produção</h2><p class="muted" id="latestSource">Consultando fontes...</p></div>
+<div><label for="month">Competência</label><select id="month"></select></div></div>
+<div class="stats" id="metrics"></div><p class="muted text-small" id="monthNote"></p></section>
+<div class="grid"><section class="box"><h2>Evolução acumulada por coleta</h2><p class="muted">O gráfico compara valores acumulados <em>dentro do mesmo mês</em>, sem inventar produção para datas não observadas.</p><div id="bars"></div></section>
+<section class="box"><h2>Contratações por coorte</h2><p class="muted">Host ainda presente em 18/10/2026, agrupado pela data de início da cooperação. Não indica o número de pessoas que já passaram pela Fênix.</p><div id="cohortBars"></div></section></div>
+<section class="box"><h2>Histórico das capturas OSS</h2><div class="table-scroller"><table><thead><tr><th>Data</th><th>Competência</th><th>Beans</th><th>Horas</th><th>Hosts</th><th>Fonte</th><th>Critério</th></tr></thead><tbody id="historicRows"></tbody></table></div></section>
+<section class="box"><h2>Comparação semanal por BIGO ID</h2><p class="muted">Disponível quando há sete dias completos de dados. Para 05–11/10/2026, é apenas uma simulação anterior à vigência da política semanal (26/10). Não inclui comissão extra semanal ou validação antifraude.</p>
+<div class="stats" id="weeklyMetrics"></div><div class="table-scroller"><table><thead><tr><th>Semana</th><th>BIGO ID</th><th>Beans</th><th>Horas válidas</th><th>Faixa</th><th>Bônus-base agente</th><th>Bônus-base host</th></tr></thead><tbody id="weeklyRows"></tbody></table></div></section>
+<section class="box"><h2>Recebimentos financeiros confirmados</h2><div id="payments"></div>
+<p class="muted text-small">Nenhum comprovante encontrado no e-mail não equivale a pagamento zero. Para validação, será necessário o demonstrativo oficial da BIGO ou o extrato da conta recebedora.</p></section>
+<section class="box"><h2>Dados e fontes</h2><p class="muted">Base histórica do OSS, políticas mensais/semanais e auditoria armazenadas no Supabase. A planilha-mestre completa está salva na Biblioteca Fênix Warriors / Historico OSS. A próxima captura individual substituirá simulações com dados verificáveis, sem alterar contratos.</p></section>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0"></script>
+<script src="src/supabase-config.js"></script>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)}, sb=window.supabase.createClient(window.FENIX_SUPABASE.url,window.FENIX_SUPABASE.publishableKey);
+var evolution=[],cohorts=[],weeks=[],receipts=[];
+var fmt=function(n){return n==null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n))};
+var usd=function(n){return 'US$ '+new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n)||0)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var monthlabel=function(s){if(!s)return '—';var x=s.slice(0,7).split('-');return x[1]+'/'+x[0]};
+var kpi=function(label,value){return '<div class="kpi"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>'};
+function chart(items,key,maxItems){
+ if(!items.length)return '<p class="muted">Sem dados para este período.</p>';
+ var selected=maxItems?items.slice(-maxItems):items, hi=Math.max.apply(null,selected.map(function(x){return Number(x[key])||0}).concat([1]));
+ return selected.map(function(x){var p=Math.max(0,Math.round(100*(Number(x[key])||0)/hi));return '<div class="bar-row"><span class="text-small">'+esc(x.label)+'</span><div class="bar-track"><div class="bar" style="width:'+p+'%"></div></div><span class="money">'+fmt(x[key])+'</span></div>'}).join('');
+}
+function selectedMonth(){
+ var m=$('month').value, data=evolution.filter(function(x){return x.period_month.slice(0,7)===m});
+ data.sort(function(a,b){return a.as_of_date.localeCompare(b.as_of_date)||(a.imported_at||'').localeCompare(b.imported_at||'')});
+ var last=data[data.length-1], first=data[0];if(!last)return;
+ $('metrics').innerHTML=kpi('Beans acumulados',fmt(last.beans_total))+kpi('Horas válidas',fmt(last.valid_live_hours))+kpi('Hosts na fonte',fmt(last.host_count))+kpi('Novos fãs',fmt(last.new_fans));
+ $('latestSource').textContent='Última coleta do mês: '+last.as_of_date+' · '+last.source_name;
+ $('monthNote').textContent='O último dia pode estar parcial. Recortes: '+data.length+'. A origem e o tipo de captura variam; campos sem informação aparecem como travessão.';
+ $('bars').innerHTML=chart(data.map(function(x){return {label:x.as_of_date.slice(8,10)+'/'+x.as_of_date.slice(5,7),beans_total:x.beans_total}}),'beans_total',15);
+}
+function render(){
+ var months=[...new Set(evolution.map(function(x){return x.period_month.slice(0,7)}))].sort().reverse();
+ var prev=$('month').value;$('month').innerHTML=months.map(function(m){return '<option value="'+m+'">'+monthlabel(m)+'</option>'}).join('');
+ if(prev&&months.includes(prev))$('month').value=prev;
+ selectedMonth();
+ $('historicRows').innerHTML=evolution.slice().sort(function(a,b){return b.as_of_date.localeCompare(a.as_of_date)}).map(function(x){return '<tr><td>'+esc(x.as_of_date)+'</td><td>'+monthlabel(x.period_month)+'</td><td>'+fmt(x.beans_total)+'</td><td>'+fmt(x.valid_live_hours)+'</td><td>'+fmt(x.host_count)+'</td><td>'+esc(x.source_name)+'</td><td>'+esc(x.notes)+'</td></tr>'}).join('');
+ var current=cohorts.filter(function(x){return x.as_of_date==='2026-10-18'}).sort(function(a,b){return a.cohort_month.localeCompare(b.cohort_month)});
+ $('cohortBars').innerHTML=chart(current.map(function(x){return {label:monthlabel(x.cohort_month),present_hosts:x.present_hosts}}),'present_hosts',12);
+ var w=weeks.filter(function(x){return Number(x.agent_bonus_usd)>0});
+ var total=weeks.reduce(function(s,x){return s+Number(x.agent_bonus_usd||0)},0),sumBeans=weeks.reduce(function(s,x){return s+Number(x.beans||0)},0);
+ $('weeklyMetrics').innerHTML=kpi('Bônus hipotético da agência',usd(total))+kpi('Hosts com bônus',String(w.length))+kpi('Beans do período',fmt(sumBeans))+kpi('Semanas disponíveis',String(new Set(weeks.map(function(x){return x.week_start})).size));
+ $('weeklyRows').innerHTML=weeks.slice().sort(function(a,b){return Number(b.agent_bonus_usd)-Number(a.agent_bonus_usd)||Number(b.beans)-Number(a.beans)}).slice(0,40).map(function(x){return '<tr><td>'+esc(x.week_start)+'</td><td>'+esc(x.bigo_id)+'</td><td>'+fmt(x.beans)+'</td><td>'+fmt(x.live_hours)+'</td><td>'+esc(x.level||'—')+'</td><td class="money">'+usd(x.agent_bonus_usd)+'</td><td>'+usd(x.host_bonus_usd)+'</td></tr>'}).join('');
+ if(!receipts.length){$('payments').innerHTML='<div class="note">Ainda não há comprovantes oficiais de repasse registrados. Não foi lançada receita zero.</div>'}
+ else {$('payments').innerHTML='<div class="table-scroller"><table><thead><tr><th>Competência</th><th>Data</th><th>Tipo</th><th>Moeda</th><th>Valor</th><th>Fonte</th></tr></thead><tbody>'+
+ receipts.map(function(x){return '<tr><td>'+monthlabel(x.competence_month)+'</td><td>'+esc(x.paid_at||'—')+'</td><td>'+esc(x.kind)+'</td><td>'+esc(x.currency)+'</td><td>'+fmt(x.amount)+'</td><td>'+esc(x.source_description||x.source_kind)+'</td></tr>'}).join('')+'</tbody></table></div>'}
+}
+async function load(){
+ $('refresh').disabled=true;
+ var qs=await Promise.all([
+ sb.from('fw_agency_evolution_snapshots').select('*').order('as_of_date',{ascending:true}).limit(300),
+ sb.from('fw_agency_roster_cohorts').select('*').order('cohort_month',{ascending:true}).limit(500),
+ sb.from('fw_agency_weekly_history').select('*').order('agent_bonus_usd',{ascending:false}).limit(600),
+ sb.from('fw_agency_verified_payments').select('*').order('competence_month',{ascending:false}).limit(300)]);
+ $('refresh').disabled=false;
+ var err=qs.filter(function(x){return x.error});if(err.length)throw Error(err.map(function(x){return x.error.message}).join('; '));
+ evolution=qs[0].data||[];cohorts=qs[1].data||[];weeks=qs[2].data||[];receipts=qs[3].data||[];
+ $('signin').style.display='none';$('workspace').style.display='block';render();
+}
+async function init(){
+ var response=await sb.auth.getSession(),session=response.data.session;
+ if(!session||!['master','admin'].includes(session.user.app_metadata&&session.user.app_metadata.role)){ $('signin').innerHTML='<h2>Acesso administrativo necessário</h2><p>Entre pelo <a href="admin.html">CRM Admin</a> para visualizar os indicadores.</p>';return}
+ if(session.user.app_metadata.must_change_password){$('signin').innerHTML='<p>Finalize a troca de senha no <a href="admin.html">CRM Admin</a>.</p>';return}
+ await load();
+ $('month').addEventListener('change',selectedMonth);
+ $('refresh').addEventListener('click',function(){load().catch(function(e){$('latestSource').textContent='Erro ao atualizar: '+e.message})});
+}
+init().catch(function(e){$('signin').innerHTML='<h2>Falha ao carregar histórico</h2><p>'+esc(e.message)+'</p>'});
+})();
+</script></body></html>
