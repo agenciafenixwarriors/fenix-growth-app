@@ -38,11 +38,12 @@ th{position:sticky;top:0;background:#30242a;color:#ffe9ba;z-index:1}
 <div class="grid"><section class="box"><h2>Evolução acumulada por coleta</h2><p class="muted">O gráfico compara valores acumulados <em>dentro do mesmo mês</em>, sem inventar produção para datas não observadas.</p><div id="bars"></div></section>
 <section class="box"><h2>Contratações por coorte</h2><p class="muted">Host ainda presente em 18/10/2026, agrupado pela data de início da cooperação. Não indica o número de pessoas que já passaram pela Fênix.</p><div id="cohortBars"></div></section></div>
 <section class="box"><h2>Histórico das capturas OSS</h2><div class="table-scroller"><table><thead><tr><th>Data</th><th>Competência</th><th>Beans</th><th>Horas</th><th>Hosts</th><th>Fonte</th><th>Critério</th></tr></thead><tbody id="historicRows"></tbody></table></div></section>
-<section class="box"><h2>Comparação semanal por BIGO ID</h2><p class="muted">Disponível quando há sete dias completos de dados. Para 05–11/10/2026, é apenas uma simulação anterior à vigência da política semanal (26/10). Não inclui comissão extra semanal ou validação antifraude.</p>
+<section class="box"><h2>Relatório semanal oficial do Agent OSS</h2><p class="muted">Extração original em Excel, com <strong>todos os hosts</strong> do período. A simulação é apenas um cenário: a política semanal ainda não estava vigente em 05–11/10/2026.</p><div class="stats" id="officialMetrics"></div><div class="note" id="officialNotice">Conferindo totais oficiais e eventuais divergências...</div><div class="table-scroller"><table><thead><tr><th>BIGO ID</th><th>Host</th><th>Beans locais</th><th>Beans internacionais</th><th>Horas válidas</th><th>Troca (%)</th><th>Faixa semanal teórica</th><th>Bônus da agência simulado</th></tr></thead><tbody id="officialRows"></tbody></table></div><p class="muted text-small" id="officialSource"></p></section>
+<section class="box"><h2>Comparação semanal reconstruída por BIGO ID</h2><p class="muted">Disponível quando há sete dias completos de dados. Para 05–11/10/2026, é apenas uma simulação anterior à vigência da política semanal (26/10). Não inclui comissão extra semanal ou validação antifraude.</p>
 <div class="stats" id="weeklyMetrics"></div><div class="table-scroller"><table><thead><tr><th>Semana</th><th>BIGO ID</th><th>Beans</th><th>Horas válidas</th><th>Faixa</th><th>Bônus-base agente</th><th>Bônus-base host</th></tr></thead><tbody id="weeklyRows"></tbody></table></div></section>
 <section class="box"><h2>Recebimentos financeiros confirmados</h2><div id="payments"></div>
 <p class="muted text-small">Nenhum comprovante encontrado no e-mail não equivale a pagamento zero. Para validação, será necessário o demonstrativo oficial da BIGO ou o extrato da conta recebedora.</p></section>
-<section class="box"><h2>Dados e fontes</h2><p class="muted">Base histórica do OSS, políticas mensais/semanais e auditoria armazenadas no Supabase. A planilha-mestre completa está salva na Biblioteca Fênix Warriors / Historico OSS. A próxima captura individual substituirá simulações com dados verificáveis, sem alterar contratos.</p></section>
+<section class="box"><h2>Dados e fontes</h2><p class="muted">Base histórica do OSS, políticas mensais/semanais e auditoria armazenadas no Supabase. A planilha-mestre completa está salva na Biblioteca Fênix Warriors / Historico OSS. A captura oficial de 05–11/10 já está importada com 277 BIGO IDs; as projeções continuam separadas de recebimentos. Nenhuma escolha contratual foi alterada.</p></section>
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0"></script>
@@ -51,7 +52,7 @@ th{position:sticky;top:0;background:#30242a;color:#ffe9ba;z-index:1}
 (function(){
 'use strict';
 var $=function(id){return document.getElementById(id)}, sb=window.supabase.createClient(window.FENIX_SUPABASE.url,window.FENIX_SUPABASE.publishableKey);
-var evolution=[],cohorts=[],weeks=[],receipts=[];
+var evolution=[],cohorts=[],weeks=[],receipts=[],officialReports=[],officialHosts=[];
 var fmt=function(n){return n==null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n))};
 var usd=function(n){return 'US$ '+new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n)||0)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
@@ -79,6 +80,24 @@ function render(){
  $('historicRows').innerHTML=evolution.slice().sort(function(a,b){return b.as_of_date.localeCompare(a.as_of_date)}).map(function(x){return '<tr><td>'+esc(x.as_of_date)+'</td><td>'+monthlabel(x.period_month)+'</td><td>'+fmt(x.beans_total)+'</td><td>'+fmt(x.valid_live_hours)+'</td><td>'+fmt(x.host_count)+'</td><td>'+esc(x.source_name)+'</td><td>'+esc(x.notes)+'</td></tr>'}).join('');
  var current=cohorts.filter(function(x){return x.as_of_date==='2026-10-18'}).sort(function(a,b){return a.cohort_month.localeCompare(b.cohort_month)});
  $('cohortBars').innerHTML=chart(current.map(function(x){return {label:monthlabel(x.cohort_month),present_hosts:x.present_hosts}}),'present_hosts',12);
+
+ var latestOfficial=officialReports.slice().sort(function(a,b){return b.week_end.localeCompare(a.week_end)})[0];
+ if(latestOfficial){
+   var oh=officialHosts.filter(function(x){return Number(x.report_id)===Number(latestOfficial.id)});
+   var totalOfficial=oh.reduce(function(s,x){return s+Number(x.agent_bonus_simulated_usd||0)},0);
+   var paidHosts=oh.filter(function(x){return Number(x.agent_bonus_simulated_usd)>0}).length;
+   $('officialMetrics').innerHTML=kpi('Hosts importados',fmt(oh.length))+kpi('Beans locais',fmt(latestOfficial.beans_local_reported))+kpi('Horas válidas',fmt(latestOfficial.valid_duration_seconds_reported/3600))+kpi('Agente · bônus hipotético',usd(totalOfficial));
+   $('officialNotice').innerHTML='<strong>Período oficial: '+esc(latestOfficial.week_start)+' até '+esc(latestOfficial.week_end)+'.</strong> '+esc(latestOfficial.differences_note||'')+' <strong>Hosts com bônus simulado: '+fmt(paidHosts)+'.</strong> Nenhum valor nesta seção é recebimento comprovado.';
+   $('officialRows').innerHTML=oh.slice().sort(function(a,b){return Number(b.beans_local)-Number(a.beans_local)}).slice(0,45).map(function(x){
+      return '<tr><td>'+esc(x.bigo_id)+'</td><td>'+esc(x.nickname)+'</td><td>'+fmt(x.beans_local)+'</td><td>'+fmt(x.beans_international)+'</td><td>'+fmt(x.live_hours)+'</td><td>'+fmt(x.exchange_rate)+'</td><td>'+esc(x.weekly_tier||'—')+'</td><td class="money">'+usd(x.agent_bonus_simulated_usd)+'</td></tr>';
+   }).join('');
+   $('officialSource').textContent='Fonte: '+latestOfficial.file_name+' · SHA-256 '+latestOfficial.file_sha256.slice(0,12)+'… · '+oh.length+' registros individuais · 188 Beans internacionais no resumo versus 183 na tabela detalhada. Valores arredondados de horas são apenas para exibição.';
+ } else {
+   $('officialMetrics').innerHTML='';
+   $('officialNotice').textContent='Nenhum relatório semanal oficial importado.';
+   $('officialRows').innerHTML='';
+   $('officialSource').textContent='';
+ }
  var w=weeks.filter(function(x){return Number(x.agent_bonus_usd)>0});
  var total=weeks.reduce(function(s,x){return s+Number(x.agent_bonus_usd||0)},0),sumBeans=weeks.reduce(function(s,x){return s+Number(x.beans||0)},0);
  $('weeklyMetrics').innerHTML=kpi('Bônus hipotético da agência',usd(total))+kpi('Hosts com bônus',String(w.length))+kpi('Beans do período',fmt(sumBeans))+kpi('Semanas disponíveis',String(new Set(weeks.map(function(x){return x.week_start})).size));
@@ -93,10 +112,12 @@ async function load(){
  sb.from('fw_agency_evolution_snapshots').select('*').order('as_of_date',{ascending:true}).limit(300),
  sb.from('fw_agency_roster_cohorts').select('*').order('cohort_month',{ascending:true}).limit(500),
  sb.from('fw_agency_weekly_history').select('*').order('agent_bonus_usd',{ascending:false}).limit(600),
- sb.from('fw_agency_verified_payments').select('*').order('competence_month',{ascending:false}).limit(300)]);
+ sb.from('fw_agency_verified_payments').select('*').order('competence_month',{ascending:false}).limit(300),
+ sb.from('fw_agency_oss_weekly_reports').select('*').order('week_end',{ascending:false}).limit(50),
+ sb.from('fw_agency_verified_weekly_metrics').select('*').order('beans_local',{ascending:false}).limit(1000)]);
  $('refresh').disabled=false;
  var err=qs.filter(function(x){return x.error});if(err.length)throw Error(err.map(function(x){return x.error.message}).join('; '));
- evolution=qs[0].data||[];cohorts=qs[1].data||[];weeks=qs[2].data||[];receipts=qs[3].data||[];
+ evolution=qs[0].data||[];cohorts=qs[1].data||[];weeks=qs[2].data||[];receipts=qs[3].data||[];officialReports=qs[4].data||[];officialHosts=qs[5].data||[];
  $('signin').style.display='none';$('workspace').style.display='block';render();
 }
 async function init(){
